@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseConfig } from '../config/firebase';
 
@@ -33,16 +33,12 @@ try {
   }
 }
 
-// Initialize Firestore with proper settings for React Native
+// Initialize Firestore - simple approach without initializeFirestore
 try {
-  db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    useFetchStreams: false,
-  });
-  console.log('Firestore initialized with React Native settings');
-} catch (error) {
-  console.log('Firestore already initialized or error:', error.message);
   db = getFirestore(app);
+  console.log('Firestore initialized successfully');
+} catch (error) {
+  console.error('Firestore initialization error:', error);
 }
 
 export { auth, db, app };
