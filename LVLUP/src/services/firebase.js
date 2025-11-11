@@ -11,34 +11,35 @@ let db;
 // Initialize Firebase App
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
-  console.log('Firebase app initialized');
+  console.log('✅ Firebase app initialized');
 } else {
   app = getApp();
-  console.log('Using existing Firebase app');
+  console.log('✅ Using existing Firebase app');
 }
 
-// Initialize Auth with proper persistence
+// Initialize Auth
 try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });
-  console.log('Firebase Auth initialized with AsyncStorage');
+  console.log('✅ Auth initialized with persistence');
 } catch (error) {
   if (error.code === 'auth/already-initialized') {
-    console.log('Auth already initialized, getting existing instance');
     auth = getAuth(app);
+    console.log('✅ Auth already initialized');
   } else {
-    console.error('Error initializing Firebase Auth:', error);
-    auth = getAuth(app);
+    console.error('❌ Auth error:', error.code, error.message);
+    throw error;
   }
 }
 
-// Initialize Firestore - simple approach without initializeFirestore
+// Initialize Firestore (simple approach for v9)
 try {
   db = getFirestore(app);
-  console.log('Firestore initialized successfully');
+  console.log('✅ Firestore initialized');
 } catch (error) {
-  console.error('Firestore initialization error:', error);
+  console.error('❌ Firestore error:', error);
+  throw error;
 }
 
 export { auth, db, app };

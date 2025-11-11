@@ -1,20 +1,71 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../services/firebase';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    // TODO: Implement Firebase authentication
-    console.log(isLogin ? 'Login' : 'Sign up', { email, password });
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Sign in existing user
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log('User signed in successfully');
+      } else {
+        // Create new user
+        await createUserWithEmailAndPassword(auth, email, password);
+        console.log('User created successfully');
+      }
+      // Navigation will happen automatically through UserContext
+    } catch (error) {
+      console.error('Auth error:', error);
+      let errorMessage = 'An error occurred. Please try again.';
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email is already registered. Please sign in instead.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email. Please sign up.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak. Use at least 6 characters.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your connection.';
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      Alert.alert('Authentication Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,6 +88,8 @@ export default function AuthScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
             />
           </View>
 
@@ -49,18 +102,28 @@ export default function AuthScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              editable={!loading}
             />
           </View>
 
-          <TouchableOpacity style={styles.authButton} onPress={handleAuth}>
-            <Text style={styles.authButtonText}>
-              {isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}
-            </Text>
+          <TouchableOpacity 
+            style={[styles.authButton, loading && styles.authButtonDisabled]} 
+            onPress={handleAuth}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Text style={styles.authButtonText}>
+                {isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}
+              </Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.switchButton} 
             onPress={() => setIsLogin(!isLogin)}
+            disabled={loading}
           >
             <Text style={styles.switchText}>
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
@@ -122,6 +185,9 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginTop: 20,
+  },
+  authButtonDisabled: {
+    opacity: 0.6,
   },
   authButtonText: {
     fontSize: 16,

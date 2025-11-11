@@ -9,12 +9,11 @@ if (Array.isArray(config.resolver.sourceExts)) {
   config.resolver.sourceExts = [...config.resolver.sourceExts, 'cjs'];
 }
 
-// Ensure consistent React Native resolution
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === 'react-native') {
-    return context.resolveRequest(context, moduleName, platform);
-  }
-  return context.resolveRequest(context, moduleName, platform);
-};
+// Force consistent React Native version
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Add node modules that need to be transpiled
+config.resolver.assetExts = config.resolver.assetExts || [];
+config.resolver.sourceExts = config.resolver.sourceExts || ['js', 'json', 'ts', 'tsx', 'cjs'];
 
 module.exports = config;
